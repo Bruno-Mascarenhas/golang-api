@@ -11,9 +11,17 @@ func main() {
 	http.HandleFunc("/coasters/", coasterHandlers.getCoaster) // se for usar get / post ai cria tudo 
 															  // no arquivo separado e so add aqui
 	*/
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		panic(err)
-	}
-}
 
+
+	rot := newRot()
+
+	http.HandleFunc("/crypt/rot", rot.handle)
+
+
+
+	//start server
+
+	err := http.ListenAndServe(":8080", nil)
+
+	if err != nil { panic(err) }
+}
