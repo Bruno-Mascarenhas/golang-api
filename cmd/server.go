@@ -17,6 +17,8 @@ func main() {
 
 	http.HandleFunc("/crypt/rot", rot.handle)
 
+  chatServer := newChatServer()
+  chatServer.handleRequests()
 
 
 	//start server
