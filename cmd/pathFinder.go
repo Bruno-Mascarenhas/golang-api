@@ -19,54 +19,76 @@ type path struct {
 	start, end pair
 }
 
-func newPath() path {
+func newPath(arr [][]string, ptr *path) {
 	tmp := path{}
+	tmp.Grid = arr
+	tmp.n = len(arr)
+	tmp.m = len(arr[0])
 
-	return tmp
+	tmp1 := pair{-1, -1}
+	tmp2 := pair{-1, -1}
+
+	for i := 0; i < tmp.n; i++ {
+		for j := 0; j < tmp.m; j++ {
+			if arr[i][j] == "." {
+				if tmp1.x == -1 {
+					tmp1 = pair{i, j}
+				} else {
+					tmp2 = pair{i, j}
+				}
+			}
+		}
+	}
+
+	tmp.start = tmp1
+	tmp.end = tmp2
+
+	ptr = &tmp
 }
 
 type pair struct {
 	x, y int
 }
 
-func (this *path) bfs() int {
+func (oth *path) bfs() int {
 	var queue []pair
 
-	cost := make([][]int, this.n)
+	cost := make([][]int, oth.n)
 	for i := range cost {
-		cost[i] = make([]int, this.m)
+		cost[i] = make([]int, oth.m)
 	}
 
-	for i := 0; i < this.n; i++ {
-		for j := 0; j < this.m; j++ {
+	for i := 0; i < oth.n; i++ {
+		for j := 0; j < oth.m; j++ {
 			cost[i][j] = 0
 		}
 	}
 
 	dx, dy := newDirections()
-	queue = append(queue, this.start)
+	queue = append(queue, oth.start)
 
 	for len(queue) > 0 {
 		curx, cury := queue[0].x, queue[0].y
 		queue = queue[1:]
 
 		for i := 0; i < 4; i++ {
-			if this.valid(curx+dx[i], cury+dy[i]) && cost[curx][cury] != 0 {
+			if oth.valid(curx+dx[i], cury+dy[i]) && cost[curx][cury] != 0 {
 				queue = append(queue, pair{curx + dx[i], cury + dy[i]})
 				cost[curx+dx[i]][cury+dy[i]] = cost[curx][cury] + 1
 			}
 		}
 
-		if curx == this.end.x && cury == this.end.y {
+		if curx == oth.end.x && cury == oth.end.y {
 			break
 		}
 	}
 
-	return cost[this.end.x][this.end.y]
+	fmt.Println(cost[oth.end.x][oth.end.y])
+	return cost[oth.end.x][oth.end.y]
 }
 
-func (this *path) valid(x, y int) bool {
-	if x >= 0 && y >= 0 && x < this.n && y < this.m && this.Grid[x][y] != "#" {
+func (oth *path) valid(x, y int) bool {
+	if x >= 0 && y >= 0 && x < oth.n && y < oth.m && oth.Grid[x][y] != "#" {
 		return true
 	} else {
 		return false
@@ -75,7 +97,7 @@ func (this *path) valid(x, y int) bool {
 
 type pathFinder struct {
 	Path       *path
-	BestValues []float64
+	BestValues []int
 }
 
 func (oth *pathFinder) HandleReq(w http.ResponseWriter, r *http.Request) {
@@ -93,14 +115,23 @@ func (oth *pathFinder) HandleReq(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func newPathFinder() pathFinder {
+	return pathFinder{}
+}
+
 type output struct {
-	Answer []float64 `json:"ans"`
+	Answer []int `json:"ans"`
 }
 
 func (oth *pathFinder) get(w http.ResponseWriter, r *http.Request) {
 	res := output{oth.BestValues}
-	jsonBytes, _ := json.Marshal(res)
-	w.Write(jsonBytes)
+	if res.Answer == nil {
+		jsonBytes, _ := json.Marshal(fmt.Sprintf("%d", 0))
+		w.Write(jsonBytes)
+	} else {
+		jsonBytes, _ := json.Marshal(res)
+		w.Write(jsonBytes)
+	}
 	w.Header().Add("content-type", "aplication/json")
 	w.WriteHeader(http.StatusOK)
 }
@@ -110,19 +141,15 @@ type myGrid struct {
 }
 
 func (oth *pathFinder) post(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.Body)
-	/*
-		num, _ := strconv.Atoi("0")
+	decoder := json.NewDecoder(r.Body)
 
-		jsonExample := `{"grid":[["#","*","*","*","*","."],
-								  ["#","*","*","*","*","."],
-								  ["#","*","*","*","*","."],
-								  ["#","*","*","*","*","."],
-								  ["#","*","*","*","*","."]]
-						}`
+	var grid myGrid
 
-		var test myGrid
+	if err := decoder.Decode(&grid); err != nil {
+		panic(err)
+	}
 
-		json.Unmarshal([]byte(jsonExample), &test)
-	*/
+	fmt.Println(grid.Array)
+	newPath(grid.Array, oth.Path)
+	oth.BestValues = append(oth.BestValues, oth.Path.bfs())
 }
