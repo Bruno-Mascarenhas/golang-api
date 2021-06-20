@@ -13,8 +13,8 @@ func main() {
 	*/
 
 
-	rot2 := newRot()
-	http.HandleFunc("/crypt/rot", rot2.handle)
+	rot := newRot()
+	http.HandleFunc("/crypt/rot", rot.handle)
 
 	chatServer := newChatServer()
 	chatServer.handleRequests()
