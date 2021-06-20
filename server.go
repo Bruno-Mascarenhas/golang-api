@@ -1,17 +1,5 @@
 package main
 
-import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"math/rand"
-	"net/http"
-	"os"
-	"strings"
-	"sync"
-	"time"
-)
-
 func main() {
 	/*
 	coasterHandlers := newCoasterHandlers()  //cada um faz o seu handler
