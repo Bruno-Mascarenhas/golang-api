@@ -5,54 +5,46 @@ import (
 	"strings"
 	"math"
 	"net/http"
-	"strconv"
+	"io/ioutil"
+	"encoding/json"
 )
 
-type rot struct {
-	route int
-	message string
+type Rot struct {
+	Route	float64	`json:"route"`
+	Message	string	`json:"message"`
 }
 
-func  newRot() rot {
-	return rot{}
+func  newRot() Rot {
+	return Rot{}
 }
 
-func (u rot) handle(w http.ResponseWriter, re *http.Request){
-	query := strings.Split(re.URL.String(), "?")
+func (u Rot) handle(w http.ResponseWriter, re *http.Request){
+	reqBody, _ := ioutil.ReadAll(re.Body)
 
-	if len(query)!=2 {
+	var rot Rot
+	json.Unmarshal(reqBody, &rot)
 
-		fmt.Fprintf(w, "Invalid query!")
+	if  rot.Route < -26 || rot.Route > 26 {
+
+		fmt.Fprintf(w, "Invalid arguments!")
 
 	} else {
+		var route rune
 
-		args := strings.Split(query[1], "&")
+		if rot.Route < 0 { route = rune(26-math.Abs(rot.Route))
+		} else { route = rune(rot.Route) }
 
-		var rs string = strings.Split(args[0],"=")[1]
-		var r, _ = strconv.ParseFloat(rs, 64)
-		var message string = strings.Split(args[1],"=")[1]
-
-		if  r < -26 || r > 26 || len(args)<2 {
-			
-			fmt.Fprintf(w, "Invalid arguments!")
-
-		} else {
-			var route rune
-			
-			if r < 0 { route = rune(26-math.Abs(r)) } else { route = rune(r) }
-
-			shift := func(c rune) rune {
-				if c >= 'A' && c <= 'Z'{
-					return 'A' + rune( (c-'A'+route)%26 )
-				} else if c >= 'a' && c <= 'z' {
-					return 'a' + rune( (c-'a'+route)%26 )
-				}
-
-				return c
-						
+		shift := func(c rune) rune {
+			if c >= 'A' && c <= 'Z'{
+				return 'A' + rune( (c-'A'+route)%26 )
+			} else if c >= 'a' && c <= 'z' {
+				return 'a' + rune( (c-'a'+route)%26 )
 			}
 
-			fmt.Fprintf(w, strings.Map(shift, message))
+			return c
+
 		}
+
+		fmt.Fprintf(w, strings.Map(shift, rot.Message))
 	}
 }
