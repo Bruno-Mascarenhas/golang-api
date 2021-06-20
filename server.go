@@ -1,5 +1,9 @@
 package main
 
+import (
+	"net/http"
+)
+
 func main() {
 	/*
 	coasterHandlers := newCoasterHandlers()  //cada um faz o seu handler
